@@ -1,10 +1,21 @@
-export const START_TIME = 10;
+export const START_TIME = 20;
 export const PENALTY = 2;
-export const MIN_TIME = 2;
+export const MIN_TIME = 8;
+export const QUESTION_COUNT = 100;
 
-/** Wrong answer or timeout: next question gets 2 seconds less (min 2). Correct keeps the time. */
+/** Wrong answer or timeout: next question gets 2 seconds less (min 8). Correct keeps the time. */
 export function nextTime(current: number, correct: boolean): number {
   return correct ? current : Math.max(MIN_TIME, current - PENALTY);
+}
+
+/** Reaching the minimum time means the game is lost. */
+export function isLost(time: number): boolean {
+  return time <= MIN_TIME;
+}
+
+export function formatClock(sec: number): string {
+  const s = Math.floor(sec);
+  return `${String(Math.floor(s / 60)).padStart(2, "0")}:${String(s % 60).padStart(2, "0")}`;
 }
 
 export const CATEGORIES = [
