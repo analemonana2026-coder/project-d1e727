@@ -1,8 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import bg from "@/assets/spiel.png.asset.json";
-import chars from "@/assets/country_outfits.jpg.asset.json";
-import { CASES, CATEGORIES, COUNTRIES, nextTime, START_TIME } from "@/lib/game";
+import { CASES, CATEGORIES, formatClock, isLost, nextTime, QUESTION_COUNT, START_TIME } from "@/lib/game";
 import { setMuted as setAudioMuted, startAmbient, tick } from "@/lib/sound";
 
 export const Route = createFileRoute("/")({
@@ -55,6 +54,9 @@ function Game() {
   const [stars, setStars] = useState(0);
   const [picked, setPicked] = useState<string | null>(null);
   const [muted, setMuted] = useState(false);
+  const [lost, setLost] = useState(false);
+  const [elapsed, setElapsed] = useState(0);
+  const startedAt = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const current = order.length ? CASES[order[idx] ?? 0] : null;
@@ -81,11 +83,14 @@ function Game() {
   const start = () => {
     startAmbient();
     setAudioMuted(muted);
-    const ord = shuffle(CASES.map((_, i) => i));
+    const ord = shuffle(CASES.map((_, i) => i)).slice(0, QUESTION_COUNT);
     setOrder(ord);
     setIdx(0);
     setScore(0);
     setStars(0);
+    setLost(false);
+    startedAt.current = Date.now();
+    setElapsed(0);
     load(ord, 0, START_TIME);
   };
 
@@ -102,7 +107,10 @@ function Game() {
     setPhase("feedback");
     const t = nextTime(limit, correct);
     setTimeout(() => {
-      if (idx + 1 >= order.length) {
+      if (isLost(t)) {
+        setLost(true);
+        setPhase("end");
+      } else if (idx + 1 >= order.length) {
         setPhase("end");
       } else {
         setIdx(idx + 1);
@@ -129,35 +137,17 @@ function Game() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left, phase]);
 
-  const charIdx = (idx + (order[0] ?? 0)) % COUNTRIES.length;
-  const col = charIdx % 6;
-  const row = Math.floor(charIdx / 6);
+  // whole-game clock
+  useEffect(() => {
+    if (phase !== "play" && phase !== "feedback") return;
+    const id = setInterval(() => setElapsed((Date.now() - startedAt.current) / 1000), 250);
+    return () => clearInterval(id);
+  }, [phase]);
 
   return (
     <main className="flex min-h-screen items-center justify-center bg-game-deep">
       <div className="relative w-full max-w-[560px] select-none" style={{ aspectRatio: "1122 / 1402" }}>
         <img src={bg.url} alt="Spielbrett am Strand" className="absolute inset-0 h-full w-full" draggable={false} />
-
-        {/* Figur im Landeskostüm */}
-        {(phase === "play" || phase === "feedback") && (
-          <div
-            key={charIdx}
-            className="absolute left-[29%] top-[13%] w-[42%] overflow-hidden rounded-3xl game-frame animate-in fade-in zoom-in-95 duration-500"
-            style={{ aspectRatio: "1 / 1" }}
-          >
-            <div
-              className="h-full w-full"
-              style={{
-                backgroundImage: `url(${chars.url})`,
-                backgroundSize: "600% 500%",
-                backgroundPosition: `${col * 20}% ${row * 25}%`,
-              }}
-            />
-            <div className="absolute inset-x-0 bottom-0 py-1 text-center game-chip !border-0 !border-t-2 text-sm">
-              {COUNTRIES[charIdx]}
-            </div>
-          </div>
-        )}
 
         {/* Punkte */}
         <div className="absolute left-[12%] top-[3%] flex h-[4%] w-[13%] items-center justify-center game-label text-[clamp(12px,3.5vw,20px)]">
@@ -180,9 +170,10 @@ function Game() {
             <div className="game-timer-track h-4 overflow-hidden rounded-full">
               <div className="game-timer-fill h-full transition-[width] duration-100" style={{ width: `${(left / limit) * 100}%` }} />
             </div>
-            <p className="mt-1 text-center game-label text-sm">
-              Frage {idx + 1}/{order.length} · {Math.ceil(left)} s
-            </p>
+            <div className="mt-1 flex items-center game-label" style={{ flexDirection: "column" }}>
+              <span className="text-sm" style={{ whiteSpace: "nowrap" }}>Frage {idx + 1}/{order.length} · {Math.ceil(left)} s</span>
+              <span className="mt-1 rounded-lg game-chip px-3 text-2xl tabular-nums" style={{ whiteSpace: "nowrap" }} aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</span>
+            </div>
             <button onClick={() => speak(current.text, muted)} className="mx-auto mt-1 block rounded-full game-chip px-3 py-1 text-xs">
               ▶ Nochmal anhören
             </button>
@@ -216,11 +207,11 @@ function Game() {
 
         {(phase === "start" || phase === "end") && (
           <div className="absolute inset-x-[8%] top-[40%] rounded-3xl game-panel p-6 text-center">
-            <h1 className="text-2xl font-black">{phase === "start" ? "Was ist das Problem?" : "Spiel beendet!"}</h1>
+            <h1 className="text-2xl font-black">{phase === "start" ? "Was ist das Problem?" : lost ? "Verloren!" : "Geschafft!"}</h1>
             <p className="mt-2 text-sm">
               {phase === "start"
-                ? "Hör dem Kunden zu und wähle die richtige Problemart. Du hast 10 Sekunden – bei jeder falschen Antwort bekommst du 2 Sekunden weniger."
-                : `Du hast ${stars} von ${order.length} richtig beantwortet. Punkte: ${score}`}
+                ? `Hör dem Kunden zu und wähle die richtige Problemart. ${QUESTION_COUNT} Fragen, du startest mit ${START_TIME} Sekunden – jede falsche Antwort kostet 2 Sekunden. Bei 8 Sekunden hast du verloren!`
+                : `${lost ? "Deine Zeit ist auf 8 Sekunden gefallen. " : ""}Richtig: ${stars} von ${order.length} · Punkte: ${score} · Gesamtzeit: ${formatClock(elapsed)}`}
             </p>
             <button onClick={start} className="mt-4 rounded-full game-play px-8 py-3 text-lg font-black">
               {phase === "start" ? "Spielen" : "Nochmal spielen"}
