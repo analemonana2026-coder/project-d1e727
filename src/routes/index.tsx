@@ -1,7 +1,9 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import bg from "@/assets/spiel.png.asset.json";
-import { CASES, CATEGORIES, nextTime, START_TIME } from "@/lib/game";
+import chars from "@/assets/characters.png.asset.json";
+import { CASES, CATEGORIES, COUNTRIES, nextTime, START_TIME } from "@/lib/game";
+import { setMuted as setAudioMuted, startAmbient, tick } from "@/lib/sound";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -77,6 +79,8 @@ function Game() {
   );
 
   const start = () => {
+    startAmbient();
+    setAudioMuted(muted);
     const ord = shuffle(CASES.map((_, i) => i));
     setOrder(ord);
     setIdx(0);
@@ -107,7 +111,6 @@ function Game() {
     }, 1800);
   };
 
-  // countdown – starts after the clip, but at the latest immediately
   useEffect(() => {
     if (phase !== "play") return;
     stop();
@@ -115,15 +118,46 @@ function Game() {
     return stop;
   }, [phase, idx]);
 
+  // tick sound every full second
+  const sec = Math.ceil(left);
+  useEffect(() => {
+    if (phase === "play" && sec > 0) tick(sec <= 3);
+  }, [sec, phase, idx]);
+
   useEffect(() => {
     if (phase === "play" && left <= 0) answer(null);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [left, phase]);
 
+  const charIdx = (idx + (order[0] ?? 0)) % COUNTRIES.length;
+  const col = charIdx % 6;
+  const row = Math.floor(charIdx / 6);
+
   return (
     <main className="flex min-h-screen items-center justify-center bg-game-deep">
       <div className="relative w-full max-w-[560px] select-none" style={{ aspectRatio: "1122 / 1402" }}>
         <img src={bg.url} alt="Spielbrett am Strand" className="absolute inset-0 h-full w-full" draggable={false} />
+
+        {/* Figur im Landeskostüm */}
+        {(phase === "play" || phase === "feedback") && (
+          <div
+            key={charIdx}
+            className="absolute left-[27%] top-[8%] w-[46%] overflow-hidden rounded-3xl game-frame animate-in fade-in zoom-in-95 duration-500"
+            style={{ aspectRatio: "209 / 251" }}
+          >
+            <div
+              className="h-full w-full"
+              style={{
+                backgroundImage: `url(${chars.url})`,
+                backgroundSize: "600% 500%",
+                backgroundPosition: `${col * 20}% ${row * 25}%`,
+              }}
+            />
+            <div className="absolute inset-x-0 bottom-0 py-1 text-center game-chip !border-0 !border-t-2 text-sm">
+              {COUNTRIES[charIdx]}
+            </div>
+          </div>
+        )}
 
         {/* Punkte */}
         <div className="absolute left-[12%] top-[3%] flex h-[4%] w-[13%] items-center justify-center game-label text-[clamp(12px,3.5vw,20px)]">
@@ -136,7 +170,7 @@ function Game() {
         {/* Startseite */}
         <button aria-label="Startseite" onClick={() => { stop(); window.speechSynthesis?.cancel(); setPhase("start"); }} className="absolute left-[3%] top-[9.3%] h-[7%] w-[8.5%] rounded-full" />
         {/* Ton */}
-        <button aria-label={muted ? "Ton an" : "Ton aus"} onClick={() => { setMuted(!muted); window.speechSynthesis?.cancel(); }} className="absolute right-[2%] top-[9%] h-[7%] w-[8.5%] rounded-full">
+        <button aria-label={muted ? "Ton an" : "Ton aus"} onClick={() => { setMuted(!muted); setAudioMuted(!muted); window.speechSynthesis?.cancel(); }} className="absolute right-[2%] top-[9%] h-[7%] w-[8.5%] rounded-full">
           {muted && <span className="game-label text-2xl">✕</span>}
         </button>
 

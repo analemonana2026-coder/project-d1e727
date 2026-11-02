@@ -6,3 +6,7 @@ describe("timer", () => {
   it("correct keeps time", () => expect(nextTime(8, true)).toBe(8));
   it("never below 2", () => expect(nextTime(2, false)).toBe(2));
 });
+import { CASES } from "@/lib/game";
+describe("questions", () => {
+  it("has at least 100 questions", () => expect(CASES.length).toBeGreaterThanOrEqual(100));
+});

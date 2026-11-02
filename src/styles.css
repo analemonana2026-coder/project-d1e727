@@ -199,3 +199,7 @@
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
 }
+@utility game-frame {
+  border: 4px solid var(--game-gold);
+  box-shadow: 0 6px 0 var(--game-wood), 0 0 20px oklch(0.2 0.05 260 / 0.5);
+}
