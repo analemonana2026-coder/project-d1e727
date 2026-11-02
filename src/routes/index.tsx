@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import bg from "@/assets/spiel.png.asset.json";
-import chars from "@/assets/characters.png.asset.json";
+import chars from "@/assets/country_outfits.jpg.asset.json";
 import { CASES, CATEGORIES, COUNTRIES, nextTime, START_TIME } from "@/lib/game";
 import { setMuted as setAudioMuted, startAmbient, tick } from "@/lib/sound";
 
@@ -143,10 +143,10 @@ function Game() {
           <div
             key={charIdx}
             className="absolute left-[29%] top-[13%] w-[42%] overflow-hidden rounded-3xl game-frame animate-in fade-in zoom-in-95 duration-500"
-            style={{ aspectRatio: "209 / 251" }}
+            style={{ aspectRatio: "1 / 1" }}
           >
             <div
-              className="h-full w-full scale-110"
+              className="h-full w-full"
               style={{
                 backgroundImage: `url(${chars.url})`,
                 backgroundSize: "600% 500%",
