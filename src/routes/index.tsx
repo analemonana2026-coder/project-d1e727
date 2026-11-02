@@ -55,7 +55,7 @@ function Game() {
   const [muted, setMuted] = useState(false);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
-  const current = order.length ? CASES[order[idx]] : null;
+  const current = order.length ? CASES[order[idx] ?? 0] : null;
 
   const stop = () => {
     if (timer.current) clearInterval(timer.current);
@@ -64,7 +64,7 @@ function Game() {
 
   const load = useCallback(
     (ord: number[], i: number, t: number) => {
-      const c = CASES[ord[i]];
+      const c = CASES[ord[i] ?? 0]!;
       const wrong = shuffle(CATEGORIES.filter((x) => x !== c.answer)).slice(0, 3);
       setOptions(shuffle([c.answer, ...wrong]));
       setPicked(null);
@@ -158,7 +158,7 @@ function Game() {
         {/* Antworten */}
         {(phase === "play" || phase === "feedback") &&
           options.map((opt, i) => {
-            const s = SLOTS[i];
+            const s = SLOTS[i]!;
             const isRight = phase === "feedback" && opt === current?.answer;
             const isWrong = phase === "feedback" && picked === opt && !isRight;
             return (
