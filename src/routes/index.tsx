@@ -142,11 +142,11 @@ function Game() {
         {(phase === "play" || phase === "feedback") && (
           <div
             key={charIdx}
-            className="absolute left-[27%] top-[8%] w-[46%] overflow-hidden rounded-3xl game-frame animate-in fade-in zoom-in-95 duration-500"
+            className="absolute left-[29%] top-[13%] w-[42%] overflow-hidden rounded-3xl game-frame animate-in fade-in zoom-in-95 duration-500"
             style={{ aspectRatio: "209 / 251" }}
           >
             <div
-              className="h-full w-full"
+              className="h-full w-full scale-110"
               style={{
                 backgroundImage: `url(${chars.url})`,
                 backgroundSize: "600% 500%",
