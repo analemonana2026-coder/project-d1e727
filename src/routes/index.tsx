@@ -170,9 +170,9 @@ function Game() {
             <div className="game-timer-track h-4 overflow-hidden rounded-full">
               <div className="game-timer-fill h-full transition-[width] duration-100" style={{ width: `${(left / limit) * 100}%` }} />
             </div>
-            <div className="mt-1 flex flex-col items-center game-label">
-              <span className="whitespace-nowrap text-sm">Frage {idx + 1}/{order.length} · {Math.ceil(left)} s</span>
-              <span className="mt-1 whitespace-nowrap rounded-lg game-chip px-3 text-2xl tabular-nums" aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</span>
+            <div className="mt-1 flex items-center game-label" style={{ flexDirection: "column" }}>
+              <span className="text-sm" style={{ whiteSpace: "nowrap" }}>Frage {idx + 1}/{order.length} · {Math.ceil(left)} s</span>
+              <span className="mt-1 rounded-lg game-chip px-3 text-2xl tabular-nums" style={{ whiteSpace: "nowrap" }} aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</span>
             </div>
             <button onClick={() => speak(current.text, muted)} className="mx-auto mt-1 block rounded-full game-chip px-3 py-1 text-xs">
               ▶ Nochmal anhören
