@@ -170,9 +170,10 @@ function Game() {
             <div className="game-timer-track h-4 overflow-hidden rounded-full">
               <div className="game-timer-fill h-full transition-[width] duration-100" style={{ width: `${(left / limit) * 100}%` }} />
             </div>
-            <p className="mt-1 text-center game-label text-sm">
-              Frage {idx + 1}/{order.length} · {Math.ceil(left)} s
-            </p>
+            <div className="mt-1 flex items-center justify-center gap-2 game-label">
+              <span className="text-sm">Frage {idx + 1}/{order.length} · {Math.ceil(left)} s</span>
+              <span className="rounded-lg game-chip px-2 text-xl tabular-nums" aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</span>
+            </div>
             <button onClick={() => speak(current.text, muted)} className="mx-auto mt-1 block rounded-full game-chip px-3 py-1 text-xs">
               ▶ Nochmal anhören
             </button>
@@ -206,11 +207,11 @@ function Game() {
 
         {(phase === "start" || phase === "end") && (
           <div className="absolute inset-x-[8%] top-[40%] rounded-3xl game-panel p-6 text-center">
-            <h1 className="text-2xl font-black">{phase === "start" ? "Was ist das Problem?" : "Spiel beendet!"}</h1>
+            <h1 className="text-2xl font-black">{phase === "start" ? "Was ist das Problem?" : lost ? "Verloren!" : "Geschafft!"}</h1>
             <p className="mt-2 text-sm">
               {phase === "start"
-                ? "Hör dem Kunden zu und wähle die richtige Problemart. Du hast 10 Sekunden – bei jeder falschen Antwort bekommst du 2 Sekunden weniger."
-                : `Du hast ${stars} von ${order.length} richtig beantwortet. Punkte: ${score}`}
+                ? `Hör dem Kunden zu und wähle die richtige Problemart. ${QUESTION_COUNT} Fragen, du startest mit ${START_TIME} Sekunden – jede falsche Antwort kostet 2 Sekunden. Bei 8 Sekunden hast du verloren!`
+                : `${lost ? "Deine Zeit ist auf 8 Sekunden gefallen. " : ""}Richtig: ${stars} von ${order.length} · Punkte: ${score} · Gesamtzeit: ${formatClock(elapsed)}`}
             </p>
             <button onClick={start} className="mt-4 rounded-full game-play px-8 py-3 text-lg font-black">
               {phase === "start" ? "Spielen" : "Nochmal spielen"}
