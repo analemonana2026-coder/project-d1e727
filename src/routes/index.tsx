@@ -57,6 +57,8 @@ function Game() {
   const [muted, setMuted] = useState(false);
   const [lost, setLost] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [jokers, setJokers] = useState(3);
+  const [hidden, setHidden] = useState<string[]>([]);
   const startedAt = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -75,6 +77,7 @@ function Game() {
       setOptions(opts);
       setLabels(Object.fromEntries(opts.map((o) => [o, randomLabel(o)])));
       setPicked(null);
+      setHidden([]);
       setLimit(t);
       setLeft(t);
       setPhase("play");
@@ -92,6 +95,8 @@ function Game() {
     setScore(0);
     setStars(0);
     setLost(false);
+    setJokers(3);
+    setHidden([]);
     startedAt.current = Date.now();
     setElapsed(0);
     load(ord, 0, START_TIME);
@@ -120,6 +125,14 @@ function Game() {
         load(order, idx + 1, t);
       }
     }, 1800);
+  };
+
+  // 50:50-Joker – entfernt zwei falsche Antworten
+  const useJoker = () => {
+    if (phase !== "play" || !current || jokers <= 0) return;
+    const wrong = options.filter((o) => o !== current.answer && !hidden.includes(o));
+    setHidden(shuffle(wrong).slice(0, 2));
+    setJokers((j) => j - 1);
   };
 
   useEffect(() => {
@@ -169,16 +182,19 @@ function Game() {
 
         {/* Timer – rechts */}
         {(phase === "play" || phase === "feedback") && current && (
-          <div className="absolute right-[3%] top-[18%] flex w-[34%] flex-col items-stretch gap-2 rounded-2xl game-hud p-3">
-            <div className="text-center text-xs font-black uppercase tracking-widest">Frage</div>
-            <div className="text-center text-3xl font-black tabular-nums leading-none">{idx + 1}<span className="text-base opacity-70">/{order.length}</span></div>
-            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full game-sec text-3xl font-black tabular-nums ${left <= 3 ? "game-pulse" : ""}`}>{Math.ceil(left)}</div>
-            <div className="game-timer-track h-3 overflow-hidden rounded-full">
+          <div className="absolute right-[3%] top-[18%] flex w-[27%] flex-col items-stretch gap-1 rounded-xl game-hud p-2">
+            <div className="text-center text-[10px] font-black uppercase tracking-widest">Frage</div>
+            <div className="text-center text-xl font-black tabular-nums leading-none">{idx + 1}<span className="text-xs opacity-70">/{order.length}</span></div>
+            <div className={`mx-auto flex h-11 w-11 items-center justify-center rounded-full game-sec text-xl font-black tabular-nums ${left <= 3 ? "game-pulse" : ""}`}>{Math.ceil(left)}</div>
+            <div className="game-timer-track h-2 overflow-hidden rounded-full">
               <div className="game-timer-fill h-full transition-[width] duration-100" style={{ width: `${(left / limit) * 100}%` }} />
             </div>
-            <div className="rounded-xl game-chip py-1 text-center text-xl tabular-nums" aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</div>
-            <button onClick={() => speak(current.text, muted)} className="rounded-full game-play px-3 py-2 text-sm font-black transition-transform hover:scale-105 active:scale-95">
+            <div className="rounded-lg game-chip py-0.5 text-center text-sm tabular-nums" aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</div>
+            <button onClick={() => speak(current.text, muted)} className="rounded-full game-play px-2 py-1 text-xs font-black transition-transform hover:scale-105 active:scale-95">
               🔊 Nochmal anhören
+            </button>
+            <button onClick={useJoker} disabled={jokers <= 0 || phase !== "play"} aria-label="Zwei falsche Antworten entfernen" className="rounded-full game-joker px-2 py-1 text-xs font-black transition-transform hover:scale-105 active:scale-95 disabled:opacity-40">
+              ✨ 50:50 ({jokers})
             </button>
           </div>
         )}
@@ -193,8 +209,8 @@ function Game() {
               <button
                 key={opt}
                 onClick={() => answer(opt)}
-                disabled={phase !== "play"}
-                className={`absolute flex items-center justify-center px-[6%] text-center game-answer text-[clamp(11px,3vw,18px)] leading-tight transition-transform hover:scale-105 ${isRight ? "game-right" : ""} ${isWrong ? "game-wrong" : ""}`}
+                disabled={phase !== "play" || hidden.includes(opt)}
+                className={`absolute flex items-center justify-center px-[6%] text-center game-answer text-[clamp(11px,3vw,18px)] leading-tight transition-transform hover:scale-105 ${isRight ? "game-right" : ""} ${isWrong ? "game-wrong" : ""} ${hidden.includes(opt) ? "opacity-0 pointer-events-none" : ""}`}
                 style={{ left: `${s.left}%`, top: `${s.top}%`, width: `${s.width}%`, height: `${s.height}%` }}
               >
                 {labels[opt] ?? opt}
@@ -211,11 +227,24 @@ function Game() {
         {(phase === "start" || phase === "end") && (
           <div className="absolute inset-x-[8%] top-[40%] rounded-3xl game-panel p-6 text-center">
             <h1 className="text-2xl font-black">{phase === "start" ? "Was ist das Problem?" : lost ? "Verloren!" : "Geschafft!"}</h1>
-            <p className="mt-2 text-sm">
-              {phase === "start"
-                ? `Hör dem Kunden zu und wähle die richtige Problemart. ${QUESTION_COUNT} Fragen, du startest mit ${START_TIME} Sekunden – jede falsche Antwort kostet 2 Sekunden. Bei 8 Sekunden hast du verloren!`
-                : `${lost ? "Deine Zeit ist auf 8 Sekunden gefallen. " : ""}Richtig: ${stars} von ${order.length} · Punkte: ${score} · Gesamtzeit: ${formatClock(elapsed)}`}
-            </p>
+            {phase === "start" ? (
+              <div className="mt-2 text-left text-xs leading-snug">
+                <p className="text-center text-sm font-bold">Hör dem Kunden zu und wähle die richtige Problemart!</p>
+                <ul className="mt-2 list-disc space-y-1 pl-4">
+                  <li>Ein Kunde erzählt dir sein Problem – hör gut zu! Tippe auf <b>„Nochmal anhören"</b>, wenn du es erneut hören willst.</li>
+                  <li>Wähle die richtige Problemart aus den vier Fischen aus.</li>
+                  <li>Du spielst <b>{QUESTION_COUNT} Fragen</b>. Jede Frage startet mit <b>{START_TIME} Sekunden</b>.</li>
+                  <li>Falsche Antwort oder Zeit abgelaufen: Die nächste Frage hat <b>2 Sekunden weniger</b>.</li>
+                  <li>Erreichst du <b>8 Sekunden</b>, hast du <b>verloren</b>!</li>
+                  <li>Du weißt nicht weiter? Mit dem <b>✨ 50:50-Joker</b> verschwinden zwei falsche Antworten. Du hast <b>3 Joker</b> pro Spiel.</li>
+                  <li>Die große Uhr zeigt deine <b>Gesamtzeit</b> für alle 100 Fragen.</li>
+                </ul>
+              </div>
+            ) : (
+              <p className="mt-2 text-sm">
+                {`${lost ? "Deine Zeit ist auf 8 Sekunden gefallen. " : ""}Richtig: ${stars} von ${order.length} · Punkte: ${score} · Gesamtzeit: ${formatClock(elapsed)}`}
+              </p>
+            )}
             <button onClick={start} className="mt-4 rounded-full game-play px-8 py-3 text-lg font-black">
               {phase === "start" ? "Spielen" : "Nochmal spielen"}
             </button>

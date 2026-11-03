@@ -195,6 +195,11 @@
   color: var(--game-cream);
   box-shadow: 0 5px 0 oklch(0.45 0.14 145);
 }
+@utility game-joker {
+  background: var(--game-gold);
+  color: var(--game-wood);
+  box-shadow: 0 3px 0 oklch(0.55 0.14 70);
+}
 @keyframes game-shake {
   25% { transform: translateX(-6px); }
   75% { transform: translateX(6px); }
