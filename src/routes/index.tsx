@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
 import bg from "@/assets/spiel.png.asset.json";
-import { CASES, CATEGORIES, formatClock, isLost, nextTime, QUESTION_COUNT, START_TIME } from "@/lib/game";
+import { CASES, CATEGORIES, formatClock, isLost, nextTime, QUESTION_COUNT, randomLabel, START_TIME } from "@/lib/game";
 import { setMuted as setAudioMuted, startAmbient, tick } from "@/lib/sound";
 
 export const Route = createFileRoute("/")({
@@ -48,6 +48,7 @@ function Game() {
   const [order, setOrder] = useState<number[]>([]);
   const [idx, setIdx] = useState(0);
   const [options, setOptions] = useState<string[]>([]);
+  const [labels, setLabels] = useState<Record<string, string>>({});
   const [limit, setLimit] = useState(START_TIME);
   const [left, setLeft] = useState(START_TIME);
   const [score, setScore] = useState(0);
@@ -70,7 +71,9 @@ function Game() {
     (ord: number[], i: number, t: number) => {
       const c = CASES[ord[i] ?? 0]!;
       const wrong = shuffle(CATEGORIES.filter((x) => x !== c.answer)).slice(0, 3);
-      setOptions(shuffle([c.answer, ...wrong]));
+      const opts = shuffle([c.answer, ...wrong]);
+      setOptions(opts);
+      setLabels(Object.fromEntries(opts.map((o) => [o, randomLabel(o)])));
       setPicked(null);
       setLimit(t);
       setLeft(t);
@@ -164,18 +167,18 @@ function Game() {
           {muted && <span className="game-label text-2xl">✕</span>}
         </button>
 
-        {/* Timer */}
+        {/* Timer – rechts */}
         {(phase === "play" || phase === "feedback") && current && (
-          <div className="absolute left-[30%] top-[3%] w-[40%]">
-            <div className="game-timer-track h-4 overflow-hidden rounded-full">
+          <div className="absolute right-[3%] top-[18%] flex w-[34%] flex-col items-stretch gap-2 rounded-2xl game-hud p-3">
+            <div className="text-center text-xs font-black uppercase tracking-widest">Frage</div>
+            <div className="text-center text-3xl font-black tabular-nums leading-none">{idx + 1}<span className="text-base opacity-70">/{order.length}</span></div>
+            <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full game-sec text-3xl font-black tabular-nums ${left <= 3 ? "game-pulse" : ""}`}>{Math.ceil(left)}</div>
+            <div className="game-timer-track h-3 overflow-hidden rounded-full">
               <div className="game-timer-fill h-full transition-[width] duration-100" style={{ width: `${(left / limit) * 100}%` }} />
             </div>
-            <div className="mt-1 flex items-center game-label" style={{ flexDirection: "column" }}>
-              <span className="text-sm" style={{ whiteSpace: "nowrap" }}>Frage {idx + 1}/{order.length} · {Math.ceil(left)} s</span>
-              <span className="mt-1 rounded-lg game-chip px-3 text-2xl tabular-nums" style={{ whiteSpace: "nowrap" }} aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</span>
-            </div>
-            <button onClick={() => speak(current.text, muted)} className="mx-auto mt-1 block rounded-full game-chip px-3 py-1 text-xs">
-              ▶ Nochmal anhören
+            <div className="rounded-xl game-chip py-1 text-center text-xl tabular-nums" aria-label="Gesamtzeit">⏱ {formatClock(elapsed)}</div>
+            <button onClick={() => speak(current.text, muted)} className="rounded-full game-play px-3 py-2 text-sm font-black transition-transform hover:scale-105 active:scale-95">
+              🔊 Nochmal anhören
             </button>
           </div>
         )}
@@ -194,7 +197,7 @@ function Game() {
                 className={`absolute flex items-center justify-center px-[6%] text-center game-answer text-[clamp(11px,3vw,18px)] leading-tight transition-transform hover:scale-105 ${isRight ? "game-right" : ""} ${isWrong ? "game-wrong" : ""}`}
                 style={{ left: `${s.left}%`, top: `${s.top}%`, width: `${s.width}%`, height: `${s.height}%` }}
               >
-                {opt}
+                {labels[opt] ?? opt}
               </button>
             );
           })}
