@@ -57,6 +57,8 @@ function Game() {
   const [muted, setMuted] = useState(false);
   const [lost, setLost] = useState(false);
   const [elapsed, setElapsed] = useState(0);
+  const [jokers, setJokers] = useState(3);
+  const [hidden, setHidden] = useState<string[]>([]);
   const startedAt = useRef(0);
   const timer = useRef<ReturnType<typeof setInterval> | null>(null);
 
@@ -75,6 +77,7 @@ function Game() {
       setOptions(opts);
       setLabels(Object.fromEntries(opts.map((o) => [o, randomLabel(o)])));
       setPicked(null);
+      setHidden([]);
       setLimit(t);
       setLeft(t);
       setPhase("play");
@@ -92,6 +95,8 @@ function Game() {
     setScore(0);
     setStars(0);
     setLost(false);
+    setJokers(3);
+    setHidden([]);
     startedAt.current = Date.now();
     setElapsed(0);
     load(ord, 0, START_TIME);
@@ -120,6 +125,14 @@ function Game() {
         load(order, idx + 1, t);
       }
     }, 1800);
+  };
+
+  // 50:50-Joker – entfernt zwei falsche Antworten
+  const useJoker = () => {
+    if (phase !== "play" || !current || jokers <= 0) return;
+    const wrong = options.filter((o) => o !== current.answer && !hidden.includes(o));
+    setHidden(shuffle(wrong).slice(0, 2));
+    setJokers((j) => j - 1);
   };
 
   useEffect(() => {
