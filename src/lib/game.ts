@@ -27,6 +27,21 @@ export const CATEGORIES = [
   "A-Z-Garantie abgelehnt",
 ];
 
+/** Different wordings per category, so the answer names change every question. */
+export const LABELS: Record<string, string[]> = {
+  "Bankeinzug abgelehnt": ["Bankeinzug abgelehnt", "Lastschrift geplatzt", "Zahlung fehlgeschlagen", "Abbuchung zurückgewiesen"],
+  "Zugestellt, aber nicht erhalten": ["Zugestellt, aber nicht erhalten", "Paket nie angekommen", "Als geliefert markiert – fehlt", "Sendung verschwunden"],
+  "Defekt / passt nicht": ["Defekt / passt nicht", "Ware beschädigt", "Falsche Größe", "Artikel kaputt"],
+  "Lieferverzögerung": ["Lieferverzögerung", "Paket kommt zu spät", "Lieferung verspätet", "Noch nicht versendet"],
+  "Marketplace (Drittanbieter)": ["Marketplace (Drittanbieter)", "Problem mit Verkäufer", "Drittanbieter-Bestellung", "Externer Händler"],
+  "A-Z-Garantie abgelehnt": ["A-Z-Garantie abgelehnt", "Garantieantrag abgelehnt", "A-bis-Z-Antrag verweigert", "Garantiefall abgewiesen"],
+};
+
+export function randomLabel(cat: string): string {
+  const l = LABELS[cat] ?? [cat];
+  return l[Math.floor(Math.random() * l.length)] ?? cat;
+}
+
 /** Countries in the order of the 6x5 character sheet (row by row). */
 export const COUNTRIES = [
   "Ägypten", "Mexiko", "Indien", "USA", "Frankreich", "Deutschland",
