@@ -94,12 +94,12 @@ export function startAmbient() {
 /** Soft Turkish-style loop: plucked saz melody in maqam Hicaz + darbuka rhythm. */
 function startTurkishMusic(c: AudioContext, out: AudioNode) {
   const bus = c.createGain();
-  bus.gain.value = 0.12;
+  bus.gain.value = 0.16;
   bus.connect(out);
   // D Hicaz: D Eb F# G A Bb C D
   const scale = [293.7, 311.1, 370, 392, 440, 466.2, 523.3, 587.3];
   const melody = [0, 1, 2, 3, 4, 3, 2, 1, 2, 3, 4, 5, 4, 3, 2, -1, 4, 5, 6, 5, 4, 3, 2, 1, 2, 1, 0, -1, 0, 2, 1, 0];
-  const step = 0.3;
+  const step = 0.18;
   const pluck = (f: number, t: number, len: number, vol: number) => {
     const o = c.createOscillator();
     const o2 = c.createOscillator();
@@ -130,7 +130,7 @@ function startTurkishMusic(c: AudioContext, out: AudioNode) {
     o.start(t); o.stop(t + 0.3);
   };
   // darbuka "maqsum": D T - T D - T -
-  const rhythm: (0 | 1 | 2)[] = [1, 2, 0, 2, 1, 0, 2, 0];
+  const rhythm: (0 | 1 | 2)[] = [1, 2, 2, 2, 1, 2, 1, 2];
   let next = c.currentTime + 0.2;
   let i = 0;
   let alive = true;
@@ -139,7 +139,7 @@ function startTurkishMusic(c: AudioContext, out: AudioNode) {
     while (next < c.currentTime + 1) {
       const n = melody[i % melody.length]!;
       if (n >= 0) pluck(scale[n]! / 2, next, step * 1.6, 0.25);
-      if (i % 8 === 0) pluck(scale[0]! / 4, next, step * 6, 0.18);
+      if (i % 4 === 0) pluck(scale[i % 16 < 8 ? 0 : 4]! / 4, next, step * 3, 0.22);
       const r = rhythm[i % 8]!;
       if (r) drum(next, r === 1);
       next += step;
