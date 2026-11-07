@@ -1,6 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useCallback, useEffect, useRef, useState } from "react";
-import bg from "@/assets/spiel.png.asset.json";
 import { CASES, CATEGORIES, formatClock, isLost, nextTime, QUESTION_COUNT, randomLabel, START_TIME } from "@/lib/game";
 import { setMuted as setAudioMuted, startAmbient, tick } from "@/lib/sound";
 
@@ -163,7 +162,7 @@ function Game() {
   return (
     <main className="flex min-h-screen items-center justify-center bg-game-deep">
       <div className="relative w-full max-w-[560px] select-none" style={{ aspectRatio: "1122 / 1402" }}>
-        <img src={bg.url} alt="Spielbrett am Strand" className="absolute inset-0 h-full w-full" draggable={false} />
+        <img src="/spiel.png" alt="Spielbrett am Strand" className="absolute inset-0 h-full w-full" draggable={false} />
 
         {/* Punkte */}
         <div className="absolute left-[12%] top-[3%] flex h-[4%] w-[13%] items-center justify-center game-label text-[clamp(12px,3.5vw,20px)]">

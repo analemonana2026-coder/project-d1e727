@@ -8,3 +8,5 @@
 > Commits you push to the connected branch sync back to Lovable and show up in
 > the editor, so keep the branch in a working state.
 <!-- LOVABLE:END -->
+ 
+- Serve game images from `public/` using plain root-relative paths so they work without an asset proxy on external hosts.
